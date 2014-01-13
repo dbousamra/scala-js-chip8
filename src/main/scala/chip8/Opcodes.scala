@@ -2,6 +2,7 @@ package chip8
 
 import scala.util.Random
 import scala.NotImplementedError
+import scala.collection.mutable
 
 object Opcodes {
 
@@ -175,17 +176,47 @@ object Opcodes {
     registers = cpu.registers.X_(Register(Random.nextInt(255) & (opcode & 0x00FF)))
   )
 
-  def opDXYN(cpu: Cpu)(implicit opcode: Int) = throw new NotImplementedError
+  def opDXYN(cpu: Cpu)(implicit opcode: Int) = {
+    val height = opcode & 0x000F
+    val coordx = cpu.registers.X
+    val coordy = cpu.registers.Y
+    var carryFlag = 0
+    var screen = cpu.screen
 
-  def opEX9E(cpu: Cpu)(implicit opcode: Int) = throw new NotImplementedError
+    for (yline <- 0 until height) {
+      val data = cpu.memory.data(cpu.registerI.value + yline)
+      var xpixelinv = 8
+      val xpixel = 0
+      for (xpixel <- 0 until 8) {
+        xpixelinv -= 1
+        val mask = 1 << xpixelinv
+        if ((data & mask) != 0) {
+          val x = coordx.value + xpixel
+          val y = coordy.value + yline
+          if ((x < 64) && (y < 32)) {
+            if (screen(x)(y) == 1) {
+              carryFlag = 1
+            }
+            screen.update(x, y, screen(x)(y) ^ 1)
+          }
+        }
+      }
+    }
+    cpu.copy(
+      registers = cpu.registers.CARRY_(Register(carryFlag)),
+      screen = screen
+    )
+  }
 
-  def opEXA1(cpu: Cpu)(implicit opcode: Int) = throw new NotImplementedError
+  def opEX9E(cpu: Cpu)(implicit opcode: Int) = cpu
+
+  def opEXA1(cpu: Cpu)(implicit opcode: Int) = cpu
 
   def opFX07(cpu: Cpu)(implicit opcode: Int) = cpu.copy(
     registers = cpu.registers.X_(Register(cpu.delayTimer))
   )
 
-  def opFX0A(cpu: Cpu)(implicit opcode: Int) = throw new NotImplementedError
+  def opFX0A(cpu: Cpu)(implicit opcode: Int) = cpu
 
   def opFX15(cpu: Cpu)(implicit opcode: Int) = cpu.copy(
     delayTimer = cpu.registers.X.value
@@ -221,7 +252,6 @@ object Opcodes {
   def opFX65(cpu: Cpu)(implicit opcode: Int) = {
     val updatedRegisters = (0 to cpu.registers.X.value).zipWithIndex.foldLeft(cpu.registers.registers){
       case (regs, (value, index)) => {
-        println("value in regi = " + cpu.memory.data.toList)
         regs.updated(index, Register(cpu.memory.data(cpu.registerI.value + index)))
       }
     }
