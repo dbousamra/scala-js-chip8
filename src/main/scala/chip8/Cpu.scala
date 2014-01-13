@@ -6,6 +6,8 @@ case class Cpu(
   val pc: Int = 0x200,
   val memory: Memory,
   val stack: Stack[Int] = Stack(),
+  val delayTimer: Int = 0,
+  val soundTimer: Int = 0,
   val registers: Registers = Registers(List.fill[Register](16)(new Register(0))),
   val registerI: Register = Register(0)) {
 

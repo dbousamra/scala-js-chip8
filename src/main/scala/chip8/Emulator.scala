@@ -5,8 +5,7 @@ import java.io.File
 object Emulator {
 
   def main(args: Array[String]) {
-    val memory = Memory.fromFile(new File("src/resources/roms/TETRIS"))
-    val cpu = Cpu(memory = memory)
+    val cpu = Cpu(memory = Memory.fromFile(new File("src/resources/roms/TETRIS")))
     cpu.run()
   }
 }

@@ -1,8 +1,11 @@
 package chip8
 
+
+//TODO do we need a register class
 case class Register(value: Int) {
   def ==(i: Register) = value == i.value
   def +(i: Register) = new Register(value + i.value)
+  def *(i: Register) = new Register(value * i.value)
   def -(i: Register) = new Register(value - i.value)
   def <<(i: Register) = new Register(value << i.value)
   def >>(i: Register) = new Register(value >> i.value)

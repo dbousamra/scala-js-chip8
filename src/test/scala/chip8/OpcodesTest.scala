@@ -6,9 +6,9 @@ import scala.collection.immutable.Stack
 class OpcodesTest extends FunSpec {
 
   val cpu = Cpu(10,
-    Memory.fromData(Array(1, 2, 3, 4, 5)),
-    Stack(1, 2, 3, 4, 5),
-    Registers(List.fill[Register](16)(new Register(0)))
+    memory    = Memory.fromData(Array(1, 2, 3, 4, 5)),
+    stack     = Stack(1, 2, 3, 4, 5),
+    registers = Registers(List.fill[Register](16)(new Register(0)))
   )
 
   describe("00EE") {
@@ -141,38 +141,136 @@ class OpcodesTest extends FunSpec {
       assert(cpuAfter.registers.CARRY === Register(1))
     }
   }
-//
-//  describe("8XY5") {
-//    it("should store the value of register Y List register X.") {
-//      val cpuBefore = cpu.copy(registers = List(Register(0x00), Register(0x01)))
-//      val cpuAfter = Opcodes.op8XY0(cpuBefore)(0x7010)
-//      assert(cpuAfter.registers(0) === Register(0x07))
-//    }
-//  }
-//
-//  describe("8XY6") {
-//    it("should store the value of register Y in register X.") {
-//      val cpuBefore = cpu.copy(registers = List(Register(0x00), Register(0x01)))
-//      val cpuAfter = Opcodes.op8XY0(cpuBefore)(0x7010)
-//      assert(cpuAfter.registers(0) === Register(0x01))
-//    }
-//  }
-//
-//  describe("8XY7") {
-//    it("should store the value of register Y in register X.") {
-//      val cpuBefore = cpu.copy(registers = List(Register(0x00), Register(0x01)))
-//      val cpuAfter = Opcodes.op8XY0(cpuBefore)(0x7010)
-//      assert(cpuAfter.registers(0) === Register(0x01))
-//    }
-//  }
-//
-//  describe("8XYE") {
-//    it("should store the value of register Y in register X.") {
-//      val cpuBefore = cpu.copy(registers = List(Register(0x00), Register(0x01)))
-//      val cpuAfter = Opcodes.op8XY0(cpuBefore)(0x7010)
-//      assert(cpuAfter.registers(0) === Register(0x01))
+
+  describe("8XY5") {
+    it("should subtract register Y from register X and store in register X") {
+      val registers = cpu.registers.registers.updated(0, Register(10)).updated(1, Register(1))
+      val cpuBefore = cpu.copy(registers = Registers(registers))
+      val cpuAfter = Opcodes.op8XY5(cpuBefore)(0x8015)
+      assert(cpuAfter.registers.registers(0) === Register(9))
+    }
+
+    it("should not set the carry flag if register X is less than register Y") {
+      val registers = cpu.registers.registers.updated(0, Register(0x01)).updated(1, Register(0x02))
+      val cpuBefore = cpu.copy(registers = Registers(registers))
+      val cpuAfter = Opcodes.op8XY5(cpuBefore)(0x8015)
+      assert(cpuAfter.registers.registers(0) === Register(-1))
+      assert(cpuAfter.registers.CARRY === Register(0))
+    }
+  }
+
+  describe("8XY6") {
+    it("should set carry flag if least signficant bit of register X is 1") {
+      val registers = cpu.registers.registers.updated(0, Register(0x11)).updated(1, Register(0x02))
+      val cpuBefore = cpu.copy(registers = Registers(registers))
+      val cpuAfter = Opcodes.op8XY6(cpuBefore)(0x8016)
+      assert(cpuAfter.registers.CARRY === Register(1))
+    }
+  }
+
+  describe("8XY7") {
+    it("should set carry flag if register Y is greater than register X") {
+      val registers = cpu.registers.registers.updated(0, Register(0x11)).updated(1, Register(0x12))
+      val cpuBefore = cpu.copy(registers = Registers(registers))
+      val cpuAfter = Opcodes.op8XY7(cpuBefore)(0x8017)
+      assert(cpuAfter.registers.CARRY === Register(1))
+    }
+  }
+
+  describe("8XYE") {
+    it("should set carry flag if most signficant bit of register X is 1") {
+      val registers = cpu.registers.registers.updated(0, Register(255)).updated(1, Register(2))
+      val cpuBefore = cpu.copy(registers = Registers(registers))
+      val cpuAfter = Opcodes.op8XYE(cpuBefore)(0x801E)
+      assert(cpuAfter.registers.CARRY === Register(1))
+    }
+    it("should multiply register X by 2") {
+      val registers = cpu.registers.registers.updated(0, Register(11)).updated(1, Register(2))
+      val cpuBefore = cpu.copy(registers = Registers(registers))
+      val cpuAfter = Opcodes.op8XYE(cpuBefore)(0x801E)
+      assert(cpuAfter.registers.registers(0) === Register(22))
+    }
+  }
+
+  describe("9XY0") {
+    it("should increase program counter by 2 if register X does not equal register Y") {
+      val registers = cpu.registers.registers.updated(0, Register(0)).updated(1, Register(1))
+      val cpuBefore = cpu.copy(registers = Registers(registers))
+      val cpuAfter = Opcodes.op9XY0(cpuBefore)(0x9010)
+      assert(cpuAfter.pc == cpuBefore.pc + 2)
+    }
+  }
+
+  describe("BNNN") {
+    it("should set the program counter to NNN plus the value in register 0") {
+      val registers = cpu.registers.registers.updated(0, Register(1))
+      val cpuBefore = cpu.copy(registers = Registers(registers))
+      val cpuAfter = Opcodes.opBNNN(cpuBefore)(0x9300)
+      assert(cpuAfter.pc == 0x301)
+    }
+  }
+
+//  describe("CXNN") {
+//    it("should set the register X to a random number AND'ed with NN") {
+//      val opcode = 0xC011
+//      val registers = cpu.registers.registers.updated(0, Register(1))
+//      val cpuBefore = cpu.copy(registers = Registers(registers))
+//      val cpuAfter = Opcodes.opCXNN(cpuBefore, 100)
+//      assert(cpuAfter.registers.X === Register(100 & (opcode & 0x00FF)))
 //    }
 //  }
 
+  describe("FX07") {
+    it("should set the the register X to the delay timer value") {
+      val registers = cpu.registers.registers.updated(0, Register(1))
+      val cpuBefore = cpu.copy(registers = Registers(registers), delayTimer = 10)
+      val cpuAfter = Opcodes.opFX07(cpuBefore)(0xF007)
+      assert(cpuAfter.registers.registers(0) === Register(cpuBefore.delayTimer))
+    }
+  }
 
+  describe("FX15") {
+    it("should set the the delay timer to the value in register X") {
+      val registers = cpu.registers.registers.updated(0, Register(22))
+      val cpuBefore = cpu.copy(registers = Registers(registers), delayTimer = 10)
+      val cpuAfter = Opcodes.opFX15(cpuBefore)(0xF015)
+      assert(cpuAfter.delayTimer === cpuBefore.registers.registers(0).value)
+    }
+  }
+
+  describe("FX18") {
+    it("should set the the sound timer to the value in register X") {
+      val registers = cpu.registers.registers.updated(0, Register(22))
+      val cpuBefore = cpu.copy(registers = Registers(registers), soundTimer = 10)
+      val cpuAfter = Opcodes.opFX18(cpuBefore)(0xF018)
+      assert(cpuAfter.soundTimer === cpuBefore.registers.registers(0).value)
+    }
+  }
+
+  describe("FX1E") {
+    it("should add the values in register I and register X and store them in register I") {
+      val registers = cpu.registers.registers.updated(0, Register(22))
+      val cpuBefore = cpu.copy(registers = Registers(registers), registerI = Register(11))
+      val cpuAfter = Opcodes.opFX1E(cpuBefore)(0xF01E)
+      assert(cpuAfter.registerI === Register(33))
+    }
+  }
+
+  describe("FX55") {
+    it("should store registers 0 through registers X in memory starting at location I.") {
+      val registers = cpu.registers.registers.updated(0, Register(3)).updated(1, Register(5)).updated(2, Register (7))
+      val cpuBefore = cpu.copy(registers = Registers(registers), registerI = Register(10))
+      val cpuAfter = Opcodes.opFX55(cpuBefore)(0xF055)
+      assert(cpuAfter.memory.data.slice(10, 13) === Array(3, 5, 7))
+    }
+  }
+
+  describe("FX65") {
+    it("Read registers from register 0 through X from memory into registers 0 through X starting at location I") {
+      val registers = cpu.registers.registers.updated(0, Register(3)).updated(1, Register(5)).updated(2, Register (7))
+      val cpuBefore = cpu.copy(registers = Registers(registers), registerI = Register(0))
+      val cpuAfter = Opcodes.opFX65(cpuBefore)(0xF065)
+      assert(cpuAfter.registers === List(Register(1), Register(2), Register(3)))
+    }
+  }
 }
