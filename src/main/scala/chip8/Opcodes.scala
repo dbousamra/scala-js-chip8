@@ -1,6 +1,7 @@
 package chip8
 
 import scala.util.Random
+import scala.NotImplementedError
 
 object Opcodes {
 
@@ -23,30 +24,30 @@ object Opcodes {
       case 0x3 => op8XY3
       case 0x4 => op8XY4
       case 0x5 => op8XY5
-            case 0x6 => op8XY6
-            case 0x7 => op8XY7
-            case 0xE => op8XYE
+      case 0x6 => op8XY6
+      case 0x7 => op8XY7
+      case 0xE => op8XYE
     }
     case 0x9000 => op9XY0
     case 0xA000 => opANNN
     case 0xB000 => opBNNN
     case 0xC000 => opCXNN
-//    case 0xD000 => opDXYN
-//    case 0xE000 => op & 0xF match {
-//      case 0xE => opEX9E
-//      case 0x1 => opEXA1
-//    }
-//    case 0xF000 => op & 0xFF match {
-//      case 0x07 => opFX07
-//      case 0x0A => opFX0A
-//      case 0x15 => opFX15
-//      case 0x18 => opFX18
-//      case 0x1E => opFX1E
-//      case 0x29 => opFX29
-//      case 0x33 => opFX33
-//      case 0x55 => opFX55
-//      case 0x65 => opFX65
-//    }
+    case 0xD000 => opDXYN
+    case 0xE000 => opcode & 0xF match {
+      case 0xE => opEX9E
+      case 0x1 => opEXA1
+    }
+    case 0xF000 => opcode & 0xFF match {
+      case 0x07 => opFX07
+      case 0x0A => opFX0A
+      case 0x15 => opFX15
+      case 0x18 => opFX18
+      case 0x1E => opFX1E
+      case 0x29 => opFX29
+      case 0x33 => opFX33
+      case 0x55 => opFX55
+      case 0x65 => opFX65
+    }
     case _ => throw new NotImplementedError()
   }
 
@@ -174,17 +175,17 @@ object Opcodes {
     registers = cpu.registers.X_(Register(Random.nextInt(255) & (opcode & 0x00FF)))
   )
 
-  def opDXYN(cpu: Cpu)(implicit opcode: Int) = cpu
+  def opDXYN(cpu: Cpu)(implicit opcode: Int) = throw new NotImplementedError
 
-  def opEX9E(cpu: Cpu)(implicit opcode: Int) = cpu
+  def opEX9E(cpu: Cpu)(implicit opcode: Int) = throw new NotImplementedError
 
-  def opEXA1(cpu: Cpu)(implicit opcode: Int) = cpu
+  def opEXA1(cpu: Cpu)(implicit opcode: Int) = throw new NotImplementedError
 
   def opFX07(cpu: Cpu)(implicit opcode: Int) = cpu.copy(
     registers = cpu.registers.X_(Register(cpu.delayTimer))
   )
 
-  def opFX0A(cpu: Cpu)(implicit opcode: Int) = cpu
+  def opFX0A(cpu: Cpu)(implicit opcode: Int) = throw new NotImplementedError
 
   def opFX15(cpu: Cpu)(implicit opcode: Int) = cpu.copy(
     delayTimer = cpu.registers.X.value
@@ -217,5 +218,13 @@ object Opcodes {
     cpu.copy(memory = Memory(updatedMemory))
   }
 
-//  cpu.registerI.value = cpu.registers((opcode & 0x0F00) >> 8).value * 5
+  def opFX65(cpu: Cpu)(implicit opcode: Int) = {
+    val updatedRegisters = (0 to cpu.registers.X.value).zipWithIndex.foldLeft(cpu.registers.registers){
+      case (regs, (value, index)) => {
+        println("value in regi = " + cpu.memory.data.toList)
+        regs.updated(index, Register(cpu.memory.data(cpu.registerI.value + index)))
+      }
+    }
+    cpu.copy(registers = Registers(updatedRegisters))
+  }
 }
