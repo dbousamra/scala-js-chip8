@@ -257,10 +257,10 @@ class OpcodesTest extends FunSpec {
   }
 
   describe("FX55") {
-    it("should store registers 0 through registers X in memory starting at location I.") {
+    it("should store registers 0 through X in memory starting at location I.") {
       val registers = cpu.registers.registers.updated(0, Register(3)).updated(1, Register(5)).updated(2, Register (7))
       val cpuBefore = cpu.copy(registers = Registers(registers), registerI = Register(10))
-      val cpuAfter = Opcodes.opFX55(cpuBefore)(0xF055)
+      val cpuAfter = Opcodes.opFX55(cpuBefore)(0xF255)
       assert(cpuAfter.memory.data.slice(10, 13) === Array(3, 5, 7))
     }
   }
@@ -269,7 +269,7 @@ class OpcodesTest extends FunSpec {
     it("Read registers from register 0 through X from memory into registers 0 through X starting at location I") {
       val registers = cpu.registers.registers.updated(0, Register(3)).updated(1, Register(5)).updated(2, Register (7))
       val cpuBefore = cpu.copy(registers = Registers(registers), registerI = Register(0x200))
-      val cpuAfter = Opcodes.opFX65(cpuBefore)(0xF065)
+      val cpuAfter = Opcodes.opFX65(cpuBefore)(0xF265)
       assert(cpuAfter.registers.registers.slice(0, 3) === List(Register(1), Register(2), Register(3)))
     }
   }

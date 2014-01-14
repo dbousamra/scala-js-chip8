@@ -166,12 +166,6 @@ object Opcodes {
     pc = cpu.registers.registers(0).value + opcode & 0x0FFF
   )
 
-//  def opCXNN(cpu: Cpu, random: => Int = Random.nextInt(255))(implicit opcode: Int) = {
-//    cpu.copy(
-//      registers = cpu.registers.X_(Register(random & (opcode & 0x00FF)))
-//    )
-//  }
-
   def opCXNN(cpu: Cpu)(implicit opcode: Int) = cpu.copy(
     registers = cpu.registers.X_(Register(Random.nextInt(255) & (opcode & 0x00FF)))
   )
@@ -186,7 +180,6 @@ object Opcodes {
     for (yline <- 0 until height) {
       val data = cpu.memory.data(cpu.registerI.value + yline)
       var xpixelinv = 8
-      val xpixel = 0
       for (xpixel <- 0 until 8) {
         xpixelinv -= 1
         val mask = 1 << xpixelinv
@@ -210,7 +203,9 @@ object Opcodes {
 
   def opEX9E(cpu: Cpu)(implicit opcode: Int) = cpu
 
-  def opEXA1(cpu: Cpu)(implicit opcode: Int) = cpu
+  def opEXA1(cpu: Cpu)(implicit opcode: Int) = cpu.copy(
+    pc = cpu.pc + 2
+  )
 
   def opFX07(cpu: Cpu)(implicit opcode: Int) = cpu.copy(
     registers = cpu.registers.X_(Register(cpu.delayTimer))
@@ -243,14 +238,16 @@ object Opcodes {
   }
 
   def opFX55(cpu: Cpu)(implicit opcode: Int) = {
-    val updatedMemory = (0 to cpu.registers.X.value).zipWithIndex.foldLeft(cpu.memory.data){
+    val x = (opcode & 0x0F00) >> 8
+    val updatedMemory = (0 to x).zipWithIndex.foldLeft(cpu.memory.data){
       case (mem, (value, index)) => mem.updated(cpu.registerI.value + index, cpu.registers.registers(index).value)
     }
     cpu.copy(memory = Memory(updatedMemory))
   }
 
   def opFX65(cpu: Cpu)(implicit opcode: Int) = {
-    val updatedRegisters = (0 to cpu.registers.X.value).zipWithIndex.foldLeft(cpu.registers.registers){
+    val x = (opcode & 0x0F00) >> 8
+    val updatedRegisters = (0 to x).zipWithIndex.foldLeft(cpu.registers.registers){
       case (regs, (value, index)) => {
         regs.updated(index, Register(cpu.memory.data(cpu.registerI.value + index)))
       }

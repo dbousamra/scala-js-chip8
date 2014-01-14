@@ -30,13 +30,15 @@ case class Cpu(
   private def debug(cpu: Cpu) = {
     println("PC before = " + cpu.pc.toHexString +
       " opcode before = " + cpu.nextOpcode.toHexString +
-      " instruction before = " + (cpu.nextOpcode & 0xF000).toHexString +
-      " timer before = " + cpu.delayTimer)
+      " instruction before = " + (cpu.nextOpcode & 0xF000).toHexString)
   }
 
   def run(cpu: Cpu = this): Cpu = {
-    Thread.sleep(100)
     (handleOpcode _ andThen handleTimers andThen handleInput)(cpu)
+  }
+
+  def recRun(cpu: Cpu = this): Cpu = {
+    recRun(run(cpu))
   }
 }
 
