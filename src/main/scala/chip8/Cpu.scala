@@ -1,5 +1,4 @@
 package chip8
-
 import scala.collection.immutable.Stack
 
 case class Cpu(
@@ -8,43 +7,41 @@ case class Cpu(
   val stack: Stack[Int] = Stack(),
   val delayTimer: Int = 0,
   val soundTimer: Int = 0,
-  val screen: Gui = Gui(65, 33),
+  val screen: Screen = Screen(65, 33),
   val registers: Registers = Registers(List.fill[Register](16)(new Register(0))),
   val registerI: Register = Register(0)) {
 
   def handleOpcode(beforeExecution: Cpu): Cpu = {
-    debug(beforeExecution)
     val opcodeFunction = Opcodes.fetch(beforeExecution.nextOpcode)
     opcodeFunction(beforeExecution.copy(beforeExecution.pc + 2))
   }
 
-  private def handleTimers(cpu: Cpu) = cpu.copy(
+  def handleTimers(cpu: Cpu) = cpu.copy(
     delayTimer = if (cpu.delayTimer > 0) cpu.delayTimer - 1 else cpu.delayTimer,
     soundTimer = if (cpu.soundTimer > 0) cpu.soundTimer - 1 else cpu.soundTimer
   )
 
-  private def handleInput(cpu: Cpu) = cpu
+  // TODO
+  def handleInput(cpu: Cpu) = cpu
 
-  private val nextOpcode = memory.data(pc) << 8 | memory.data(pc + 1)
+  val nextOpcode = memory.data(pc) << 8 | memory.data(pc + 1)
 
-  private def debug(cpu: Cpu) = {
+  def debug(cpu: Cpu) = {
     println("PC before = " + cpu.pc.toHexString +
       " opcode before = " + cpu.nextOpcode.toHexString +
       " instruction before = " + (cpu.nextOpcode & 0xF000).toHexString)
   }
 
-  def run(cpu: Cpu = this): Cpu = {
-    (handleOpcode _ andThen handleTimers andThen handleInput)(cpu)
-  }
-
-  def recRun(cpu: Cpu = this): Cpu = {
-    recRun(run(cpu))
+  def emulate(drawScreen: Cpu => Cpu) = {
+    handleOpcode _ andThen handleTimers andThen handleInput andThen drawScreen
   }
 }
 
-case class Gui(x: Int, y: Int) {
+case class Screen(x: Int, y: Int) {
   val s = Array.ofDim[Int](x, y)
+
   def apply(x: Int) = s(x)
-  def update(x: Int, y: Int, value: Int) { s(x)(y) = value }
+
+  def update(x: Int, y: Int, value: Int) = s(x)(y) = value
 }
 

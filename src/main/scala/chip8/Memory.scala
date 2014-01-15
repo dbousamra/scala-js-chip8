@@ -37,4 +37,10 @@ object Memory {
     for (i <- 0 until fontSet.length) { m(i) = fontSet(i) }
     Memory(m)
   }
+
+  def main(args: Array[String]) {
+    val is = new FileInputStream(new File("src/resources/roms/TANK"))
+    val romData = Stream.continually(is.read).takeWhile(-1 !=).toArray
+    println(romData.toList)
+  }
 }

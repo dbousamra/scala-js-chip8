@@ -49,12 +49,10 @@ object Opcodes {
       case 0x55 => opFX55
       case 0x65 => opFX65
     }
-    case _ => throw new NotImplementedError()
+    case _ => throw new NotImplementedError
   }
 
-  def clearScreen(cpu: Cpu)(implicit opcode: Int) = {
-    cpu
-  }
+  def clearScreen(cpu: Cpu)(implicit opcode: Int) = cpu
 
   def op00EE(cpu: Cpu)(implicit opcode: Int) = cpu.copy(
     pc = cpu.stack.head,
