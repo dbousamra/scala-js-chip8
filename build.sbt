@@ -6,6 +6,7 @@ name := "Example"
 version := "0.1-SNAPSHOT"
 
 libraryDependencies ++= Seq(
+    "org.scalaz" %% "scalaz-core" % "7.0.5",
     "org.scala-lang.modules.scalajs" %% "scalajs-jquery" % "0.1-SNAPSHOT",
     "org.scala-lang.modules.scalajs" %% "scalajs-jasmine-test-framework" % scalaJSVersion % "test",
     "org.scalatest" % "scalatest_2.10" % "2.0" % "test"

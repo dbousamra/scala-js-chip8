@@ -1,32 +1,36 @@
 package chip8
 
-//TODO do we need a register class
-case class Register(value: Int) {
-  def ==(i: Register) = value == i.value
-  def +(i: Register) = new Register(value + i.value)
-  def *(i: Register) = new Register(value * i.value)
-  def -(i: Register) = new Register(value - i.value)
-  def <<(i: Register) = new Register(value << i.value)
-  def >>(i: Register) = new Register(value >> i.value)
-  def &(i: Register) = new Register(value & i.value)
-  def |(i: Register) = new Register(value | i.value)
-  def ^(i: Register) = new Register(value ^ i.value)
-}
+case class Registers(val registers: IndexedSeq[Register]) {
 
-case class Registers(val registers: List[Register]) {
-  def X(implicit address: Int) = registers((address & 0x0F00) >> 8)
-  def Y(implicit address: Int) = registers((address & 0x00F0) >> 4)
+  type AddressR[T] = Address => T
+
+  def X(implicit address: Address) = registers((address & 0x0F00) >> 8)
+  def Y(implicit address: Address) = registers((address & 0x00F0) >> 4)
   def CARRY = registers(0xF)
 
-  def X_(value: Register)(implicit address: Int): Registers = {
+  def X_(value: Register)(implicit address: Address): Registers = {
     Registers(registers.updated((address & 0x0F00) >> 8, value))
   }
 
-  def Y_(value: Register)(implicit address: Int): Registers = {
+  def Y_(value: Register)(implicit address: Address): Registers = {
     Registers(registers.updated((address & 0x0F00) >> 8, value))
   }
 
   def CARRY_(value: Register): Registers = {
     Registers(registers.updated(0xF, value))
   }
+
+//  def X: AddressR[Register] = address => registers((address & 0x0F00) >> 8)
+//  def Y: AddressR[Register] = address => registers((address & 0x00F0) >> 4)
+//
+//  def CARRY: AddressR[Register] = address => registers(0xF)
+//
+//  def X_(value: Register): AddressR[Registers] =
+//  address => Registers(registers.updated((address & 0x0F00) >> 8, value))
+//
+//  def Y_(value: Register): AddressR[Registers] =
+//    address => Registers(registers.updated((address & 0x00F0) >> 4, value))
+//
+//  def CARRY_(value: Register): AddressR[Registers] =
+//    address => Registers(registers.updated(0xF, value))
 }

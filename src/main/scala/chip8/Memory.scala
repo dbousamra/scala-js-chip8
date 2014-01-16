@@ -39,7 +39,7 @@ object Memory {
   }
 
   def main(args: Array[String]) {
-    val is = new FileInputStream(new File("src/resources/roms/TANK"))
+    val is = new FileInputStream(new File("src/resources/roms/LOGO"))
     val romData = Stream.continually(is.read).takeWhile(-1 !=).toArray
     println(romData.toList)
   }

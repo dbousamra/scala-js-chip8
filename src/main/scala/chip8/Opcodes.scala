@@ -2,11 +2,9 @@ package chip8
 
 import scala.util.Random
 import scala.NotImplementedError
-import scala.collection.mutable
 
 object Opcodes {
-
-  def fetch(implicit opcode: Int): Cpu => Cpu = opcode & 0xF000 match {
+  def fetch(opcode: Opcode): CpuReader = (opcode.instruction match {
     case 0x0000 => opcode & 0xF match {
       case 0x0000 => clearScreen
       case 0x000E => op00EE
@@ -50,140 +48,107 @@ object Opcodes {
       case 0x65 => opFX65
     }
     case _ => throw new NotImplementedError
-  }
+  })(opcode)
 
-  def clearScreen(cpu: Cpu)(implicit opcode: Int) = cpu
+  val clearScreen: CpuOp = _ => identity
 
-  def op00EE(cpu: Cpu)(implicit opcode: Int) = cpu.copy(
-    pc = cpu.stack.head,
-    stack = cpu.stack.pop
-  )
+  val op00EE: CpuOp = opcode => cpu => cpu.copy(pc = cpu.stack.head, stack = cpu.stack.pop)
 
-  def op1NNN(cpu: Cpu)(implicit opcode: Int) = cpu.copy(
-    pc = opcode & 0x0FFF
-  )
+  val op1NNN: CpuOp = opcode => _.copy(pc = opcode.NNN)
 
-  def op2NNN(cpu: Cpu)(implicit opcode: Int) = cpu.copy(
-    stack = cpu.stack.push(cpu.pc),
-    pc = opcode & 0x0FFF
-  )
+  val op2NNN: CpuOp = opcode => cpu => cpu.copy(stack = cpu.stack.push(cpu.pc), pc = opcode.NNN)
 
-  def op3XNN(cpu: Cpu)(implicit opcode: Int) = cpu.copy(
+  val op3XNN: CpuOp = opcode => cpu => cpu.copy(pc = if (cpu.registers.X(opcode)== (opcode.NN)) cpu.pc + 2 else cpu.pc)
+
+  val op4XNN: CpuOp = opcode => cpu => cpu.copy(
     pc =
-      if (cpu.registers.X.value  == (opcode & 0x00FF)) cpu.pc + 2
+      if (cpu.registers.X(opcode) != (opcode.NN)) cpu.pc + 2
       else cpu.pc
   )
 
-  def op4XNN(cpu: Cpu)(implicit opcode: Int) = cpu.copy(
+  val op5XY0: CpuOp = opcode => cpu => cpu.copy(
     pc =
-      if (cpu.registers.X.value  != (opcode & 0x00FF)) cpu.pc + 2
+      if (cpu.registers.X(opcode)== cpu.registers.Y(opcode)) cpu.pc + 2
       else cpu.pc
   )
 
-  def op5XY0(cpu: Cpu)(implicit opcode: Int) = cpu.copy(
-    pc =
-      if (cpu.registers.X == cpu.registers.Y) cpu.pc + 2
-      else cpu.pc
-  )
+  val op6XNN: CpuOp = opcode => cpu => cpu.copy(registers = cpu.registers.X_(opcode.NN)(opcode))
 
-  def op6XNN(cpu: Cpu)(implicit opcode: Int) = cpu.copy(
-    registers = cpu.registers.X_(Register(opcode & 0x00FF))
-  )
+  val op7XNN: CpuOp = opcode => cpu => cpu.copy(registers = cpu.registers.X_(cpu.registers.X(opcode) + opcode.NN)(opcode))
 
-  def op7XNN(cpu: Cpu)(implicit opcode: Int) = cpu.copy(
-    registers = cpu.registers.X_(Register(cpu.registers.X.value + opcode & 0x00FF))
-  )
+  val op8XY0: CpuOp = opcode => cpu => cpu.copy(registers = cpu.registers.X_(cpu.registers.Y(opcode))(opcode))
 
-  def op8XY0(cpu: Cpu)(implicit opcode: Int) = cpu.copy(
-    registers = cpu.registers.X_(cpu.registers.Y)
-  )
+  val op8XY1: CpuOp = opcode => cpu => cpu.copy(registers = cpu.registers.X_(cpu.registers.X(opcode) | cpu.registers.Y(opcode))(opcode))
 
-  def op8XY1(cpu: Cpu)(implicit opcode: Int) = cpu.copy(
-    registers = cpu.registers.X_(cpu.registers.X | cpu.registers.Y)
-  )
+  val op8XY2: CpuOp = opcode => cpu => cpu.copy(registers = cpu.registers.X_(cpu.registers.X(opcode) & cpu.registers.Y(opcode))(opcode))
 
+  val op8XY3: CpuOp = opcode => cpu => cpu.copy(registers = cpu.registers.X_(cpu.registers.X(opcode) ^ cpu.registers.Y(opcode))(opcode))
 
-  def op8XY2(cpu: Cpu)(implicit opcode: Int) = cpu.copy(
-    registers = cpu.registers.X_(cpu.registers.X & cpu.registers.Y)
-  )
-
-  def op8XY3(cpu: Cpu)(implicit opcode: Int) = cpu.copy(
-    registers = cpu.registers.X_(cpu.registers.X ^ cpu.registers.Y)
-  )
-
-  def op8XY4(cpu: Cpu)(implicit opcode: Int) = {
-    val result = cpu.registers.X + cpu.registers.Y
-    val carryFlag = if (result.value > 255) 1 else 0
+  val op8XY4: CpuOp = opcode => cpu => {
+    val result = cpu.registers.X(opcode) + cpu.registers.Y(opcode)
+    val carryFlag = if (result > 255) 1 else 0
     cpu.copy(
-      registers = cpu.registers.X_(Register(result.value & 0xFF))
+      registers = cpu.registers.X_(Register(result & 0xFF))(opcode)
         .CARRY_(Register(carryFlag))
     )
   }
 
-  def op8XY5(cpu: Cpu)(implicit opcode: Int) = {
-    val carryFlag = if (cpu.registers.X.value < cpu.registers.Y.value) 0 else 1
+  val op8XY5: CpuOp = opcode => cpu => {
+    val carryFlag = if (cpu.registers.X(opcode) < cpu.registers.Y(opcode)) 0 else 1
     cpu.copy(
-      registers = cpu.registers.X_(cpu.registers.X - cpu.registers.Y)
+      registers = cpu.registers.X_(cpu.registers.X(opcode) - cpu.registers.Y(opcode))(opcode)
         .CARRY_(Register(carryFlag))
     )
   }
 
-  def op8XY6(cpu: Cpu)(implicit opcode: Int) = {
-    val carryFlag = cpu.registers.X & Register(0x1)
+  val op8XY6: CpuOp = opcode => cpu => {
+    val carryFlag = cpu.registers.X(opcode) & Register(0x1)
     cpu.copy(
-      registers = cpu.registers.X_(cpu.registers.X >> Register(1))
+      registers = cpu.registers.X_(cpu.registers.X(opcode) >> Register(1))(opcode)
         .CARRY_(carryFlag)
     )
   }
 
-  def op8XY7(cpu: Cpu)(implicit opcode: Int) = {
-    val carryFlag = if (cpu.registers.Y.value < cpu.registers.X.value) 0 else 1
+  val op8XY7: CpuOp = opcode => cpu => {
+    val carryFlag = if (cpu.registers.Y(opcode) < cpu.registers.X(opcode)) 0 else 1
     cpu.copy(
-      registers = cpu.registers.X_(cpu.registers.Y - cpu.registers.X)
+      registers = cpu.registers.X_(cpu.registers.Y(opcode) - cpu.registers.X(opcode))(opcode)
         .CARRY_(Register(carryFlag))
     )
   }
 
-  def op8XYE(cpu: Cpu)(implicit opcode: Int) = {
-    val carryFlag = cpu.registers.X.value >> 7
+  val op8XYE: CpuOp = opcode => cpu => {
+    val carryFlag = cpu.registers.X(opcode)>> 7
     cpu.copy(
-      registers = cpu.registers.X_(Register(cpu.registers.X.value * 2))
+      registers = cpu.registers.X_(Register(cpu.registers.X(opcode) * 2))(opcode)
         .CARRY_(Register(carryFlag))
     )
   }
 
-  def op9XY0(cpu: Cpu)(implicit opcode: Int) = cpu.copy(
-    pc = if (cpu.registers.X != cpu.registers.Y) cpu.pc + 2 else cpu.pc
-  )
+  val op9XY0: CpuOp = opcode => cpu => cpu.copy(pc = if (cpu.registers.X(opcode)!= cpu.registers.Y(opcode)) cpu.pc + 2 else cpu.pc)
 
-  def opANNN(cpu: Cpu)(implicit opcode: Int) = cpu.copy(
-    registerI = Register(opcode & 0x0FFF)
-  )
+  val opANNN: CpuOp = opcode => _.copy(registerI = Register(opcode.NNN))
 
-  def opBNNN(cpu: Cpu)(implicit opcode: Int) = cpu.copy(
-    pc = cpu.registers.registers(0).value + opcode & 0x0FFF
-  )
+  val opBNNN: CpuOp = opcode => cpu => cpu.copy(pc = cpu.registers.registers(0) + opcode.NNN)
 
-  def opCXNN(cpu: Cpu)(implicit opcode: Int) = cpu.copy(
-    registers = cpu.registers.X_(Register(Random.nextInt(255) & (opcode & 0x00FF)))
-  )
+  val opCXNN: CpuOp = opcode => cpu => cpu.copy(registers = cpu.registers.X_(Register(Random.nextInt(255) & (opcode.NN)))(opcode))
 
-  def opDXYN(cpu: Cpu)(implicit opcode: Int) = {
+  val opDXYN: CpuOp = opcode => cpu => {
     val height = opcode & 0x000F
-    val coordx = cpu.registers.X
-    val coordy = cpu.registers.Y
+    val coordx = cpu.registers.X(opcode)
+    val coordy = cpu.registers.Y(opcode)
     var carryFlag = 0
     var screen = cpu.screen
 
     for (yline <- 0 until height) {
-      val data = cpu.memory.data(cpu.registerI.value + yline)
+      val data = cpu.memory.data(cpu.registerI + yline)
       var xpixelinv = 8
       for (xpixel <- 0 until 8) {
         xpixelinv -= 1
         val mask = 1 << xpixelinv
         if ((data & mask) != 0) {
-          val x = coordx.value + xpixel
-          val y = coordy.value + yline
+          val x = coordx + xpixel
+          val y = coordy + yline
           if ((x < 64) && (y < 32)) {
             if (screen(x)(y) == 1) {
               carryFlag = 1
@@ -199,55 +164,43 @@ object Opcodes {
     )
   }
 
-  def opEX9E(cpu: Cpu)(implicit opcode: Int) = cpu
+  val opEX9E: CpuOp = _ => identity
 
-  def opEXA1(cpu: Cpu)(implicit opcode: Int) = cpu.copy(
-    pc = cpu.pc + 2
-  )
+  val opEXA1: CpuOp = opcode => cpu => cpu.copy(pc = cpu.pc + 2)
 
-  def opFX07(cpu: Cpu)(implicit opcode: Int) = cpu.copy(
-    registers = cpu.registers.X_(Register(cpu.delayTimer))
-  )
+  val opFX07: CpuOp = opcode => cpu => cpu.copy(registers = cpu.registers.X_(Register(cpu.delayTimer))(opcode))
 
-  def opFX0A(cpu: Cpu)(implicit opcode: Int) = cpu
+  val opFX0A: CpuOp = _ => identity
 
-  def opFX15(cpu: Cpu)(implicit opcode: Int) = cpu.copy(
-    delayTimer = cpu.registers.X.value
-  )
+  val opFX15: CpuOp = opcode => cpu => cpu.copy(delayTimer = cpu.registers.X(opcode))
 
-  def opFX18(cpu: Cpu)(implicit opcode: Int) = cpu.copy(
-    soundTimer = cpu.registers.X.value
-  )
+  val opFX18: CpuOp = opcode => cpu => cpu.copy(soundTimer = cpu.registers.X(opcode))
 
-  def opFX1E(cpu: Cpu)(implicit opcode: Int) = cpu.copy(
-    registerI = cpu.registers.X + cpu.registerI
-  )
+  val opFX1E: CpuOp = opcode => cpu => cpu.copy(registerI = cpu.registers.X(opcode) + cpu.registerI)
 
-  def opFX29(cpu: Cpu)(implicit opcode: Int) = cpu.copy(
-    registerI = cpu.registers.X * Register(5)
-  )
+  val opFX29: CpuOp = opcode => cpu => cpu.copy(registerI = cpu.registers.X(opcode) * Register(5))
 
-  def opFX33(cpu: Cpu)(implicit opcode: Int) = {
+  val opFX33: CpuOp = opcode => cpu => {
     val updatedMemory = Memory(cpu.memory.data
-      .updated(cpu.registerI.value + 0, cpu.registers.X.value / 100)
-      .updated(cpu.registerI.value + 1, (cpu.registers.X.value / 10) % 10)
-      .updated(cpu.registerI.value + 2, cpu.registers.X.value % 10))
+      .updated(cpu.registerI + 0, cpu.registers.X(opcode) / 100)
+      .updated(cpu.registerI + 1, (cpu.registers.X(opcode) / 10) % 10)
+      .updated(cpu.registerI + 2, cpu.registers.X(opcode) % 10))
     cpu.copy(memory = updatedMemory)
   }
 
-  def opFX55(cpu: Cpu)(implicit opcode: Int) = {
+  val opFX55: CpuOp = opcode => cpu => {
     val x = (opcode & 0x0F00) >> 8
     val updatedMemory = (0 to x).zipWithIndex.foldLeft(cpu.memory.data){
-      case (mem, (value, index)) => mem.updated(cpu.registerI.value + index, cpu.registers.registers(index).value)
+      case (mem, (value, index)) => mem.updated(cpu.registerI + index, cpu.registers.registers(index))
     }
     cpu.copy(memory = Memory(updatedMemory))
   }
 
-  def opFX65(cpu: Cpu)(implicit opcode: Int) = {
+  val opFX65: CpuOp = opcode => cpu => {
     val x = (opcode & 0x0F00) >> 8
     val updatedRegisters = (0 to x).zipWithIndex.foldLeft(cpu.registers.registers){
       case (regs, (value, index)) => {
-        regs.updated(index, Register(cpu.memory.data(cpu.registerI.value + index)))
+        regs.updated(index, Register(cpu.memory.data(cpu.registerI + index)))
       }
     }
     cpu.copy(registers = Registers(updatedRegisters))

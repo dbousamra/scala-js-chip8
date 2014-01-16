@@ -8,32 +8,28 @@ case class Cpu(
   val delayTimer: Int = 0,
   val soundTimer: Int = 0,
   val screen: Screen = Screen(65, 33),
-  val registers: Registers = Registers(List.fill[Register](16)(new Register(0))),
-  val registerI: Register = Register(0)) {
+  val registers: Registers = Registers(Vector.fill[Register](16)(0)),
+  val registerI: Register = 0) {
+
+  def nextOpcode = memory.data(pc) << 8 | memory.data(pc + 1)
 
   def handleOpcode(beforeExecution: Cpu): Cpu = {
     val opcodeFunction = Opcodes.fetch(beforeExecution.nextOpcode)
     opcodeFunction(beforeExecution.copy(beforeExecution.pc + 2))
   }
 
-  def handleTimers(cpu: Cpu) = cpu.copy(
-    delayTimer = if (cpu.delayTimer > 0) cpu.delayTimer - 1 else cpu.delayTimer,
-    soundTimer = if (cpu.soundTimer > 0) cpu.soundTimer - 1 else cpu.soundTimer
+  def handleTimers: CpuReader = cpu => cpu.copy(
+  delayTimer = if (cpu.delayTimer > 0) cpu.delayTimer - 1 else cpu.delayTimer,
+  soundTimer = if (cpu.soundTimer > 0) cpu.soundTimer - 1 else cpu.soundTimer
   )
 
-  // TODO
-  def handleInput(cpu: Cpu) = cpu
+  def handleInput: CpuReader = identity
 
-  val nextOpcode = memory.data(pc) << 8 | memory.data(pc + 1)
-
-  def debug(cpu: Cpu) = {
-    println("PC before = " + cpu.pc.toHexString +
-      " opcode before = " + cpu.nextOpcode.toHexString +
-      " instruction before = " + (cpu.nextOpcode & 0xF000).toHexString)
-  }
-
-  def emulate(drawScreen: Cpu => Cpu) = {
-    handleOpcode _ andThen handleTimers andThen handleInput andThen drawScreen
+  def emulate(drawScreen: CpuReader) = {
+    handleOpcode _ andThen
+    handleTimers   andThen
+    handleInput    andThen
+    drawScreen
   }
 }
 
