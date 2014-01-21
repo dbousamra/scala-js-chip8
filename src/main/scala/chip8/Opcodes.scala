@@ -160,7 +160,7 @@ object Opcodes {
     }
     cpu.copy(
       registers = cpu.registers.CARRY_(Register(carryFlag)),
-      screen = screen
+      screen = screen.copy(drawFlag = true)(data = screen.data)
     )
   }
 

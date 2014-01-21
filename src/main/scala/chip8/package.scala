@@ -22,9 +22,10 @@ package object chip8 {
 
   def Register(i: Int): Register = i
 
-  def debug(cpu: Cpu) = {
+  def debug: CpuReader = cpu => {
     println("PC before = " + cpu.pc.toHexString +
       " opcode before = " + cpu.nextOpcode.toHexString +
       " instruction before = " + (cpu.nextOpcode & 0xF000).toHexString)
+    cpu
   }
 }

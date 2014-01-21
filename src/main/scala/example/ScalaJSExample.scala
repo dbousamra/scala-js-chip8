@@ -13,27 +13,41 @@ object ScalaJSExample {
     val width  = 12 * 64
     val height = 12 * 34
     val canvas = jQuery("<canvas width='" + width + "' height='" + height + "'></canvas>")
-    val domCanvas = canvas.get(0).asInstanceOf[HTMLCanvasElement]
+    implicit val domCanvas = canvas.get(0).asInstanceOf[HTMLCanvasElement]
     val context = domCanvas.getContext("2d").asInstanceOf[CanvasRenderingContext2D]
     playground.append(jQuery("<div>").append(canvas))
 
-    var cpu = Cpu(memory = Memory.fromData(Roms.LOGO))
-    for (i <- 0 until 400) {
-      cpu = cpu.emulate(drawScreen(context))(cpu)
-    }
+    var cpu = Cpu(memory = Memory.fromData(Roms.TANK))
+//    for (i <- 0 until 10) {
+//      for (j <- 0 until 1000) {
+//        cpu = cpu.emulate(render(domCanvas, context))(cpu)
+//      }
+//      cpu = render(domCanvas, context)(cpu)
+//    }
+
+//    g.jQuery("h1").each({ (item: js.Any, index : js.Number) =>
+//      g.console.log(s"$index: ${g.jQuery(item).text()}")
+//    }: js.ThisFunction)
+
+//    g.window.requestAnimationFrame()
+    println("hello")
   }
 
-  def drawScreen(context: CanvasRenderingContext2D)(cpu: Cpu): Cpu =  {
-    context.fillStyle = "green"
-    g.console.log("IN draw screen mofo")
-    for (x <- 0 until 64) {
-      for (y <- 0 until 32) {
+  def clearScreen(canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) = {
+    context.clearRect(0, 0, canvas.width, canvas.height);
+  }
+
+  def render(canvas: HTMLCanvasElement, context: CanvasRenderingContext2D)(cpu: Cpu): Cpu =  {
+    if (cpu.screen.drawFlag) {
+      clearScreen(canvas, context)
+      println("CALLED")
+      for (x <- 0 until 64; y <- 0 until 32) {
         if (cpu.screen(x)(y) == 1) {
-          g.setTimeout()
+//          g.setTimeout(10)
           context.fillRect(x * 12, y * 12, 12, 12)
         }
       }
     }
-    cpu
+    cpu.copy(screen = cpu.screen.copy(drawFlag = false)(cpu.screen.data))
   }
 }
