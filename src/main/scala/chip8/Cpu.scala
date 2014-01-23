@@ -27,10 +27,19 @@ case class Cpu(
 
   def emulate: CpuReader => CpuReader = render => {
     handleOpcode   andThen
+    handleOpcode   andThen
+    handleOpcode   andThen
+    handleOpcode   andThen
+    handleOpcode   andThen
+    handleOpcode   andThen
+    handleOpcode   andThen
+    handleOpcode   andThen
+    handleOpcode   andThen
+    handleOpcode   andThen
     handleTimers   andThen
     handleInput    andThen
-    debug
-//    render
+//    debug          andThen
+    render
   }
 }
 
