@@ -4,7 +4,7 @@ import scala.scalajs.js
 import js.Dynamic.{ global => g }
 import org.scalajs.dom.{CanvasRenderingContext2D, HTMLCanvasElement}
 import org.scalajs.jquery._
-import chip8.{Roms, Memory, Cpu, Screen}
+import chip8.{Memory, Cpu, Screen}
 import java.io.File
 
 object ScalaJSExample {

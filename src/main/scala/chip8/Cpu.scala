@@ -1,5 +1,6 @@
 package chip8
 import scala.collection.immutable.Stack
+import scala.Predef._
 
 case class Cpu(
   val pc: Int = 0x200,
@@ -13,10 +14,7 @@ case class Cpu(
 
   def nextOpcode = memory.data(pc) << 8 | memory.data(pc + 1)
 
-  def handleOpcode: CpuReader = cpu => {
-    val opcodeFunction = Opcodes.fetch(cpu.nextOpcode)
-    opcodeFunction(cpu.copy(cpu.pc + 2))
-  }
+  def handleOpcode: CpuReader = cpu => Opcodes.fetch(cpu.nextOpcode)(cpu.copy(cpu.pc + 2))
 
   def handleTimers: CpuReader = cpu => cpu.copy(
     delayTimer = if (cpu.delayTimer > 0) cpu.delayTimer - 1 else cpu.delayTimer,
@@ -26,27 +24,15 @@ case class Cpu(
   def handleInput: CpuReader = identity
 
   def emulate: CpuReader => CpuReader = render => {
-    handleOpcode   andThen
-    handleOpcode   andThen
-    handleOpcode   andThen
-    handleOpcode   andThen
-    handleOpcode   andThen
-    handleOpcode   andThen
-    handleOpcode   andThen
-    handleOpcode   andThen
-    handleOpcode   andThen
-    handleOpcode   andThen
+    10 times handleOpcode andThen
     handleTimers   andThen
     handleInput    andThen
-//    debug          andThen
+    debug          andThen
     render
   }
 }
 
-case class Screen(
-  x: Int,
-  y: Int,
-  val drawFlag: Boolean = true)(
+case class Screen(x: Int, y: Int, val drawFlag: Boolean = true)(
   val data: Array[Array[Int]] = Array.ofDim[Int](x, y)) {
   def apply(x: Int) = data(x)
   def update(x: Int, y: Int, value: Int) = data(x)(y) = value

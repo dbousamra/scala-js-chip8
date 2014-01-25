@@ -19,18 +19,4 @@ case class Registers(val registers: IndexedSeq[Register]) {
   def CARRY_(value: Register): Registers = {
     Registers(registers.updated(0xF, value))
   }
-
-//  def X: AddressR[Register] = address => registers((address & 0x0F00) >> 8)
-//  def Y: AddressR[Register] = address => registers((address & 0x00F0) >> 4)
-//
-//  def CARRY: AddressR[Register] = address => registers(0xF)
-//
-//  def X_(value: Register): AddressR[Registers] =
-//  address => Registers(registers.updated((address & 0x0F00) >> 8, value))
-//
-//  def Y_(value: Register): AddressR[Registers] =
-//    address => Registers(registers.updated((address & 0x00F0) >> 4, value))
-//
-//  def CARRY_(value: Register): AddressR[Registers] =
-//    address => Registers(registers.updated(0xF, value))
 }
