@@ -29,7 +29,8 @@ package object chip8 {
   def debug: CpuReader = cpu => {
     println("PC before = " + cpu.pc.toHexString +
       " opcode before = " + cpu.nextOpcode.toHexString +
-      " instruction before = " + (cpu.nextOpcode & 0xF000).toHexString)
+      " instruction before = " + (cpu.nextOpcode & 0xF000).toHexString +
+      " registers = " + cpu.registers.registers.map(_.toHexString))
     cpu
   }
 }

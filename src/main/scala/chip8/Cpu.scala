@@ -23,12 +23,19 @@ case class Cpu(
 
   def handleInput: CpuReader = identity
 
-  def emulate: CpuReader => CpuReader = render => {
-    10 times handleOpcode andThen
+  def emulate: Int => CpuReader => CpuReader = tickRate => render => {
+    tickRate times handleOpcode andThen
     handleTimers   andThen
     handleInput    andThen
-    debug          andThen
+//    debug          andThen
     render
+  }
+
+  def emulate2: CpuReader = {
+    handleOpcode andThen
+    handleTimers   andThen
+    handleInput    andThen
+    debug
   }
 }
 

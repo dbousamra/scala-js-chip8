@@ -4,8 +4,7 @@ import scala.scalajs.js
 import js.Dynamic.{ global => g }
 import org.scalajs.dom.{CanvasRenderingContext2D, HTMLCanvasElement}
 import org.scalajs.jquery._
-import chip8.{Memory, Cpu, Screen}
-import java.io.File
+import chip8.{Memory, Cpu}
 
 object ScalaJSExample {
 
@@ -18,9 +17,9 @@ object ScalaJSExample {
     val context = domCanvas.getContext("2d").asInstanceOf[CanvasRenderingContext2D]
     playground.append(jQuery("<div>").append(canvas))
 
-    var cpu = Cpu(memory = Memory.fromData(getFile("src/resources/roms/INVADERS")))
+    var cpu = Cpu(memory = Memory.fromData(getFile("src/resources/roms/MISSILE")))
     def fn: js.Function = (event: js.Any) => {
-      cpu = cpu.emulate(render(domCanvas, context))(cpu)
+      cpu = cpu.emulate(10)(render(domCanvas, context))(cpu)
       g.window.requestAnimationFrame(fn)
     }
 
