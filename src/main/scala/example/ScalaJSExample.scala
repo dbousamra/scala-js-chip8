@@ -43,6 +43,7 @@ object ScalaJSExample {
       clearScreen(canvas, context)
       for (x <- 0 until 64; y <- 0 until 32) {
         if (cpu.screen(x)(y) == 1) {
+          context.fillStyle   = "#FF4136"
           context.fillRect(x * 12, y * 12, 12, 12)
         }
       }
