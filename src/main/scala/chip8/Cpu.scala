@@ -30,13 +30,6 @@ case class Cpu(
 //    debug          andThen
     render
   }
-
-  def emulate2: CpuReader = {
-    handleOpcode andThen
-    handleTimers   andThen
-    handleInput    andThen
-    debug
-  }
 }
 
 case class Screen(x: Int, y: Int, val drawFlag: Boolean = true)(
