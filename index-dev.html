@@ -3,11 +3,25 @@
 <head>
   <title>Example Scala.js application</title>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="css/bootstrap.min.css" rel='stylesheet' type='text/css'>
   <style>
     #playground {
       width: 768px;
+      height: 408px;
       margin-left: auto ;
       margin-right: auto
+    }
+    red {
+      color: #FF4136;
+    }
+
+    .container {
+      max-width: 940px;
+    }
+
+    .row {
+      padding-bottom: 10px;
     }
   </style>
 </head>
@@ -15,10 +29,57 @@
 
 <body>
 
-<div id="playground">
+<div class="container">
+  <div class="page-header">
+    <h1><strong>A <red>CHIP-8</red> emulator built using <red>Scala.</red></strong></h1>
+    <p class="lead">Scala-js specifically.</p>
+    <div class="row form-horizontal">
+      <div class="col-lg-2">
+        <select id="games" class="input-small">
+          <option value="15PUZZLE">15PUZZLE</option>
+          <option value="BLINKY">BLINKY</option>
+          <option value="BLITZ">BLITZ</option>
+          <option value="BRIX">BRIX</option>
+          <option value="CONNECT4">CONNECT4</option>
+          <option value="EMUTEST">EMUTEST</option>
+          <option value="GUESS">GUESS</option>
+          <option value="HIDDEN">HIDDEN</option>
+          <option value="INVADERS">INVADERS</option>
+          <option value="KALEID">KALEID</option>
+          <option value="LOGO">LOGO</option>
+          <option value="MAZE">MAZE</option>
+          <option value="MERLIN">MERLIN</option>
+          <option value="MISSILE">MISSILE</option>
+          <option value="PONG">PONG</option>
+          <option value="PONG2">PONG2</option>
+          <option value="PUZZLE">PUZZLE</option>
+          <option value="SYZYGY">SYZYGY</option>
+          <option value="TANK">TANK</option>
+          <option value="TETRIS">TETRIS</option>
+          <option value="TICTAC">TICTAC</option>
+          <option value="UFO">UFO</option>
+          <option value="VBRIX">VBRIX</option>
+          <option value="VERS">VERS</option>
+          <option value="WIPEOFF">WIPEOFF</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+
+
+  <div class="row" id="playground"></div>
+
+  <div class="row">
+    <p class="text-center"><small>Created by <a href="https://github.com/dbousamra">dbousamra</a>.
+      Source on <a href="https://github.com/dbousamra/scala-js-chip8">Github</a></small></p>
+  </div>
+
+
 </div>
 
-<script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
+<script src="./js/jquery.min.js"></script>
+<script src="./js/bootstrap.min.js"></script>
 <script type="text/javascript" src="./target/scala-2.10/example-extdeps.js"></script>
 <script type="text/javascript" src="./target/scala-2.10/example-intdeps.js"></script>
 <script type="text/javascript" src="./target/scala-2.10/example.js"></script>

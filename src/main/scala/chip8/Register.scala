@@ -2,8 +2,6 @@ package chip8
 
 case class Registers(val registers: IndexedSeq[Register]) {
 
-  type AddressR[T] = Address => T
-
   def X(implicit address: Address) = registers((address & 0x0F00) >> 8)
   def Y(implicit address: Address) = registers((address & 0x00F0) >> 4)
   def CARRY = registers(0xF)
